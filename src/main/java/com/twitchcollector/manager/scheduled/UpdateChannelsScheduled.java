@@ -3,8 +3,6 @@ package com.twitchcollector.manager.scheduled;
 import com.twitchcollector.manager.channel.ChannelService;
 import com.twitchcollector.manager.channel.domain.Channel;
 import com.twitchcollector.manager.twitch.TwitchService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +14,6 @@ import static com.twitchcollector.manager.twitch.domain.constant.Language.NORWEG
 @Component
 public class UpdateChannelsScheduled {
 
-    private static final Logger logger = LoggerFactory.getLogger(UpdateChannelsScheduled.class);
-
     private final TwitchService twitchService;
     private final ChannelService channelService;
     private final Supplier<Instant> instantSupplier;
@@ -28,11 +24,21 @@ public class UpdateChannelsScheduled {
         this.instantSupplier = instantSupplier;
     }
 
-    @Scheduled(fixedDelay = 60000L)
+    @Scheduled(fixedDelay = 600000L)
     public void updateChannels() {
         twitchService.getTopStreams(NORWEGIAN).getData().forEach(stream ->
                 channelService.getChannel(stream.getUserId()).ifPresentOrElse(
-                        channel -> logger.debug("Ignoring already discovered channel with userId: {}", channel.getUserId()),
+                        channel -> {
+                            final var userId = channel.getUserId();
+                            final var newUserLogin = stream.getUserLogin();
+                            final var newUsername = stream.getUsername();
+                            if (!channel.getUserLogin().equals(newUserLogin)) {
+                                channelService.updateUserLogin(newUserLogin, userId);
+                                channelService.updateUsername(newUsername, userId);
+                            } else if (!channel.getUsername().equals(newUsername)) {
+                                channelService.updateUsername(newUsername, userId);
+                            }
+                        },
                         () -> channelService.saveChannel(new Channel(stream.getUserId(), stream.getUserLogin(), stream.getUsername(), instantSupplier.get()))));
     }
 }

@@ -28,4 +28,16 @@ public class ChannelService {
     public Optional<Channel> getChannel(String userId) {
         return channelRepository.getChannel(userId);
     }
+
+    public void updateUserLogin(String userLogin, String userId) {
+        logger.debug("Updating userLogin to: {} for channel with userId: {}", userLogin, userId);
+        channelRepository.updateUserLogin(userLogin, userId);
+        logger.info("Updated userLogin to: {} for channel with userId: {}", userLogin, userId);
+    }
+
+    public void updateUsername(String username, String userId) {
+        logger.debug("Updating username to: {} for channel with userId: {}", username, userId);
+        channelRepository.updateUsername(username, userId);
+        logger.info("Updated username to: {} for channel with userId: {}", username, userId);
+    }
 }

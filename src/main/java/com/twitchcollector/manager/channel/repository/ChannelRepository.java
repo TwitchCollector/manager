@@ -37,4 +37,12 @@ public class ChannelRepository {
             return Optional.empty();
         }
     }
+
+    public void updateUserLogin(String userLogin, String userId) {
+        jdbcTemplate.update("UPDATE channel SET user_login = :user_login WHERE user_id = :user_id", new MapSqlParameterSource().addValue("user_login", userLogin).addValue("user_id", userId));
+    }
+
+    public void updateUsername(String username, String userId) {
+        jdbcTemplate.update("UPDATE channel SET username = :username WHERE user_id = :user_id", new MapSqlParameterSource().addValue("username", username).addValue("user_id", userId));
+    }
 }

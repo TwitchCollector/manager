@@ -1,5 +1,7 @@
 package com.twitchcollector.manager.twitch.domain;
 
+import java.util.Optional;
+
 public class Pagination {
 
     private final String cursor;
@@ -8,7 +10,7 @@ public class Pagination {
         this.cursor = cursor;
     }
 
-    public String getCursor() {
-        return cursor;
+    public Optional<String> getCursor() {
+        return Optional.ofNullable(cursor);
     }
 }

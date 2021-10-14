@@ -3,6 +3,7 @@ package com.twitchcollector.manager.scheduled;
 import com.twitchcollector.manager.channel.ChannelService;
 import com.twitchcollector.manager.channel.domain.Channel;
 import com.twitchcollector.manager.twitch.TwitchService;
+import com.twitchcollector.manager.twitch.domain.Stream;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -26,19 +27,25 @@ public class UpdateChannelsScheduled {
 
     @Scheduled(fixedDelay = 600000L)
     public void updateChannels() {
-        twitchService.getTopStreams(NORWEGIAN).getData().forEach(stream ->
-                channelService.getChannel(stream.getUserId()).ifPresentOrElse(
-                        channel -> {
-                            final var userId = channel.getUserId();
-                            final var newUserLogin = stream.getUserLogin();
-                            final var newUsername = stream.getUsername();
-                            if (!channel.getUserLogin().equals(newUserLogin)) {
-                                channelService.updateUserLogin(newUserLogin, userId);
-                                channelService.updateUsername(newUsername, userId);
-                            } else if (!channel.getUsername().equals(newUsername)) {
-                                channelService.updateUsername(newUsername, userId);
-                            }
-                        },
-                        () -> channelService.saveChannel(new Channel(stream.getUserId(), stream.getUserLogin(), stream.getUsername(), instantSupplier.get()))));
+        var streams = twitchService.getStreams(NORWEGIAN);
+        while (streams.getPagination().getCursor().isPresent()) {
+            streams.getData().forEach(this::processStream);
+            streams = twitchService.getStreams(NORWEGIAN, streams.getPagination().getCursor().get());
+        }
+    }
+
+    private void processStream(Stream stream) {
+        channelService.getChannel(stream.getUserId()).ifPresentOrElse(channel -> {
+                    final var userId = channel.getUserId();
+                    final var newUserLogin = stream.getUserLogin();
+                    final var newUsername = stream.getUsername();
+                    if (!channel.getUserLogin().equals(newUserLogin)) {
+                        channelService.updateUserLogin(newUserLogin, userId);
+                        channelService.updateUsername(newUsername, userId);
+                    } else if (!channel.getUsername().equals(newUsername)) {
+                        channelService.updateUsername(newUsername, userId);
+                    }
+                },
+                () -> channelService.saveChannel(new Channel(stream.getUserId(), stream.getUserLogin(), stream.getUsername(), instantSupplier.get())));
     }
 }
